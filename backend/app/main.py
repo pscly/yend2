@@ -1,10 +1,12 @@
 # backend/app/main.py
-from fastapi import FastAPI
+from fastapi import FastAPI, Depends, Request
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager # 用于 FastAPI 的 lifespan (替代 on_event)
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.v1.router import api_router_v1
 from app.core.config import settings
+from app.api import deps
 # from app.db import base # 确保所有模型被加载，主要用于 Alembic 或直接创建表
 # from app.db.session import async_engine, sync_engine # 如果需要在 lifespan 中操作引擎
 
@@ -99,6 +101,146 @@ async def read_root():
         ],
         "debug_echo_endpoint": f"{settings.API_V1_STR}/debug/echo"
     }
+
+# --- 匿名推送接口 ---
+@app.api_route("/d1", methods=["GET", "POST"], tags=["Anonymous Push"])
+async def anonymous_push(request: Request, db: AsyncSession = Depends(deps.get_async_db)):
+    """
+    匿名推送消息接口，支持GET和POST请求。
+
+    - GET请求：通过URL参数接收 bt(标题) 和 content(内容)
+    - POST请求：支持表单数据和JSON格式，接收 bt(标题) 和 content(内容)
+
+    响应始终包含：
+    - 当前时间（格式化为易读的日期时间字符串）
+    - 当前请求的完整URL
+    - 请求中的所有参数（作为字典）
+
+    示例：
+    - GET: /d1?bt=标题&content=内容
+    - POST (表单): /d1 (表单数据: bt=标题&content=内容)
+    - POST (JSON): /d1 (JSON数据: {"bt": "标题", "content": "内容"})
+    """
+    from app.crud.crud_push import crud_push_source, crud_push_message
+    import logging
+    import datetime
+
+    logger = logging.getLogger(__name__)
+
+    # 获取请求数据（合并所有可能的来源）
+    data = {}
+
+    # 1. 处理URL参数（适用于GET和POST）
+    for key, value in request.query_params.items():
+        data[key] = value
+
+    # 2. 处理POST请求的表单或JSON数据
+    if request.method == "POST":
+        content_type = request.headers.get("content-type", "").lower()
+
+        if "application/json" in content_type:
+            # 处理JSON数据
+            try:
+                json_data = await request.json()
+                data.update(json_data)
+            except Exception as e:
+                logger.error(f"解析JSON数据失败: {str(e)}")
+                return {
+                    "error": f"无法解析JSON数据: {str(e)}",
+                    "timestamp": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                    "url": str(request.url),
+                    "params": dict(request.query_params)
+                }
+
+        elif "application/x-www-form-urlencoded" in content_type or "multipart/form-data" in content_type:
+            # 处理表单数据
+            try:
+                form_data = await request.form()
+                for key, value in form_data.items():
+                    data[key] = value
+            except Exception as e:
+                logger.error(f"解析表单数据失败: {str(e)}")
+                return {
+                    "error": f"无法解析表单数据: {str(e)}",
+                    "timestamp": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                    "url": str(request.url),
+                    "params": dict(request.query_params)
+                }
+
+    # 准备基本响应信息
+    response_data = {
+        "timestamp": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+        "url": str(request.url),
+        "params": data
+    }
+
+    # 检查是否有参数
+    if not data:
+        response_data["message"] = "没有参数"
+        return response_data
+
+    # 获取标题和内容参数
+    title = data.get("bt")
+    content = data.get("content")
+
+    # 如果没有bt或content参数，直接返回基本信息
+    if not title and not content:
+        response_data["message"] = "未提供bt或content参数"
+        return response_data
+
+    # 如果只有标题没有内容，或者只有内容没有标题，也返回基本信息
+    if not title or not content:
+        response_data["message"] = "提供了部分参数"
+        response_data["has_title"] = bool(title)
+        response_data["has_content"] = bool(content)
+        return response_data
+
+    # 查找默认的推送来源（或创建一个）
+    source_name = "匿名推送"
+    db_source = await crud_push_source.get_source_by_name(db, name=source_name)
+
+    if not db_source:
+        # 如果不存在默认的匿名推送来源，则创建一个
+        from app.schemas.push import PushSourceCreate
+        source_data = PushSourceCreate(
+            name=source_name,
+            source_type="anonymous",
+            description="用于匿名推送消息的默认来源",
+            is_active=True,
+            config={"anonymous": True}
+        )
+        db_source = await crud_push_source.create_source(db, obj_in=source_data)
+        logger.info(f"已创建默认的匿名推送来源: {source_name}")
+
+    # 推送消息给所有订阅者
+    try:
+        created_messages = await crud_push_message.create_messages_for_subscribers(
+            db=db,
+            source_id=db_source.id,
+            title=title,
+            content=content,
+            content_type="text/plain",
+            raw_data=data
+        )
+
+        # 添加推送结果到响应
+        response_data.update({
+            "success": True,
+            "message": "消息已成功推送",
+            "recipients_count": len(created_messages),
+            "title": title,
+            "content": content
+        })
+
+        return response_data
+    except Exception as e:
+        logger.error(f"推送消息失败: {str(e)}")
+        response_data.update({
+            "error": f"推送消息失败: {str(e)}",
+            "title": title,
+            "content": content
+        })
+        return response_data
 
 # 如果你需要在应用启动时执行一些一次性任务，例如创建初始超级用户，
 # 可以将其放在 lifespan 的启动部分，或者创建一个管理命令。

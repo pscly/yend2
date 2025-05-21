@@ -12,6 +12,8 @@
 
 具体后端接口参看文件 openapi.json
 
-前端框架 uniapp + vue3
+前端框架 uniapp + vue3  + yarn + Vite 
+
+侧重方向 h5 方向和 小程序/App 端 并重
 
 
