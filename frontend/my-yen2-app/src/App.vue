@@ -1,9 +1,6 @@
 <template>
   <view class="container">
-    <!-- 应用内容 -->
-    <view class="test-content">
-      <text>测试内容 - 如果你能看到这个，说明 App.vue 正常渲染</text>
-    </view>
+    <!-- 应用内容将由路由自动加载 -->
   </view>
 </template>
 
@@ -12,9 +9,13 @@ import { onLaunch, onShow, onHide } from "@dcloudio/uni-app";
 import { setupAPI } from '@/utils/api-config';
 import { useUserStore } from '@/store/modules/user';
 import { showError } from '@/utils/message';
+import { setupRouterGuard } from '@/utils/router-guard';
 
 // 初始化API配置
 setupAPI();
+
+// 初始化路由守卫
+setupRouterGuard();
 
 // 获取用户状态管理
 const userStore = useUserStore();
@@ -55,14 +56,6 @@ page {
 }
 
 .container {
-  padding: 20px;
-}
-
-.test-content {
-  background-color: #fff;
-  padding: 20px;
-  border-radius: 5px;
-  margin-top: 20px;
-  text-align: center;
+  min-height: 100vh;
 }
 </style>

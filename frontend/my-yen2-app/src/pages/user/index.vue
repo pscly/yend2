@@ -1,33 +1,37 @@
 <template>
-  <view class="user-container">
-    <view v-if="userStore.isLoggedIn" class="user-info">
-      <view class="avatar-wrapper">
-        <image class="avatar" src="/static/images/default-avatar.png" />
-      </view>
-      <view class="info-content">
-        <text class="username">{{ userStore.userInfo?.username || '用户名' }}</text>
-        <text class="email">{{ userStore.userInfo?.email || 'email@example.com' }}</text>
-      </view>
-    </view>
+  <view class="page-container">
+    <header-bar title="个人中心"></header-bar>
     
-    <view v-else class="not-logged-in">
-      <text class="tip">您尚未登录</text>
-      <button class="login-btn" @click="goToLogin">去登录</button>
-    </view>
-    
-    <view class="menu-list">
-      <view class="menu-item" @click="navigateTo('/pages/settings/index')">
-        <text class="menu-text">设置</text>
-        <text class="arrow">></text>
+    <view class="user-container">
+      <view v-if="userStore.isLoggedIn" class="user-info">
+        <view class="avatar-wrapper">
+          <image class="avatar" :src="userStore.userInfo?.avatar || '/static/images/default-avatar.png'" />
+        </view>
+        <view class="info-content">
+          <text class="username">{{ userStore.userInfo?.username || '用户名' }}</text>
+          <text class="email">{{ userStore.userInfo?.email || 'email@example.com' }}</text>
+        </view>
       </view>
       
-      <view class="menu-item" @click="navigateTo('/pages/about/index')">
-        <text class="menu-text">关于我们</text>
-        <text class="arrow">></text>
+      <view v-else class="not-logged-in">
+        <text class="tip">您尚未登录</text>
+        <button class="login-btn" @click="goToLogin">去登录</button>
       </view>
       
-      <view v-if="userStore.isLoggedIn" class="menu-item logout" @click="handleLogout">
-        <text class="menu-text">退出登录</text>
+      <view class="menu-list">
+        <view class="menu-item" @click="navigateTo('/pages/settings/index')">
+          <text class="menu-text">设置</text>
+          <text class="arrow">></text>
+        </view>
+        
+        <view class="menu-item" @click="navigateTo('/pages/about/index')">
+          <text class="menu-text">关于我们</text>
+          <text class="arrow">></text>
+        </view>
+        
+        <view v-if="userStore.isLoggedIn" class="menu-item logout" @click="handleLogout">
+          <text class="menu-text">退出登录</text>
+        </view>
       </view>
     </view>
   </view>
@@ -37,6 +41,7 @@
 import { onShow } from '@dcloudio/uni-app';
 import { useUserStore } from '@/store/modules/user';
 import { showError, showSuccess, showConfirm, showLoading, hideLoading } from '@/utils/message';
+import HeaderBar from '@/components/common/HeaderBar.vue';
 
 const userStore = useUserStore();
 
@@ -73,13 +78,24 @@ const handleLogout = async () => {
   if (confirmed) {
     userStore.logout();
     showSuccess('已退出登录');
+    
+    // 返回登录页面
+    uni.reLaunch({
+      url: '/pages/login/index'
+    });
   }
 };
 </script>
 
 <style lang="scss">
-.user-container {
+.page-container {
+  display: flex;
+  flex-direction: column;
   min-height: 100vh;
+}
+
+.user-container {
+  flex: 1;
   background-color: #f5f7fa;
 }
 

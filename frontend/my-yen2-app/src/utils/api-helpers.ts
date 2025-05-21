@@ -8,16 +8,24 @@ export async function loginRequest(username: string, password: string) {
     const params = new URLSearchParams();
     params.append('username', username);
     params.append('password', password);
+    params.append('grant_type', 'password');
+    
+    console.log('发送登录请求:', `${OpenAPI.BASE}/api/v1/auth/login`);
     
     const response = await axios.post(`${OpenAPI.BASE}/api/v1/auth/login`, params, {
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded'
-      }
+      },
+      // 修改为 false 以解决 CORS 问题
+      withCredentials: false
     });
+    
+    console.log('登录响应状态:', response.status);
+    console.log('登录响应头:', response.headers);
     
     return response.data;
   } catch (error) {
-    console.error('Login request failed:', error);
+    console.error('登录请求失败:', error);
     throw error;
   }
 }
@@ -56,3 +64,5 @@ export async function formDataRequest(url: string, data: Record<string, any>, me
     throw error;
   }
 }
+
+

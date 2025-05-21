@@ -67,9 +67,12 @@ const handleLogin = async () => {
   showLoading('登录中...');
   
   try {
-    await userStore.login(form.username, form.password);
+    const response = await userStore.login(form.username, form.password);
     hideLoading();
     showSuccess('登录成功');
+    
+    console.log('登录成功，用户信息:', userStore.userInfo);
+    console.log('登录状态:', userStore.isLoggedIn);
     
     // 登录成功后跳转到首页
     setTimeout(() => {
@@ -79,11 +82,17 @@ const handleLogin = async () => {
     }, 1500);
   } catch (error: any) {
     hideLoading();
+    console.error('登录错误详情:', error);
+    
     // 处理不同类型的错误
-    if (error.status === 401) {
-      showError('用户名或密码错误');
-    } else if (error.status === 403) {
-      showError('账号已被禁用');
+    if (error.response) {
+      if (error.response.status === 401) {
+        showError('用户名或密码错误');
+      } else if (error.response.status === 403) {
+        showError('账号已被禁用');
+      } else {
+        showError(error.response.data?.detail || '登录失败，请稍后重试');
+      }
     } else {
       showError(error.message || '登录失败，请稍后重试');
     }

@@ -4,6 +4,7 @@ import { isLoggedIn } from './auth';
 const authPages = [
   '/pages/user/index',
   '/pages/settings/index',
+  '/pages/push/index', // 添加消息中心页面
   // 添加其他需要登录的页面
 ];
 

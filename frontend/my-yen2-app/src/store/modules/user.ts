@@ -29,16 +29,29 @@ export const useUserStore = defineStore('user', {
     // 登录
     async login(username: string, password: string) {
       try {
+        console.log('开始登录请求:', username);
         const response = await loginRequest(username, password);
-        const { token } = response;
+        console.log('登录响应:', response);
         
-        // 保存token
-        this.token = token;
-        setToken(token);
-        
-        return response;
+        if (response && response.access_token) {
+          // 保存token (可能服务器返回的是access_token而不是token)
+          const token = response.access_token;
+          this.token = token;
+          setToken(token);
+          
+          // 登录成功后立即获取用户信息
+          try {
+            await this.getUserInfo();
+          } catch (error) {
+            console.error('获取用户信息失败:', error);
+          }
+          
+          return response;
+        } else {
+          throw new Error('登录响应中没有找到token');
+        }
       } catch (error) {
-        console.error('Login failed:', error);
+        console.error('登录失败:', error);
         throw error;
       }
     },

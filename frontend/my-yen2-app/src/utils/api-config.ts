@@ -21,7 +21,7 @@ export function setupAPI() {
   OpenAPI.TOKEN = async () => getToken();
   
   // 配置凭证策略
-  OpenAPI.WITH_CREDENTIALS = true;
+  OpenAPI.WITH_CREDENTIALS = false;
   
   // 配置请求头
   OpenAPI.HEADERS = async () => {
