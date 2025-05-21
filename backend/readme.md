@@ -7,5 +7,5 @@
 
 ## 简介
 
-详细简介参看[详细介绍](codes/yend2/readme)
+详细简介参看[详细介绍](yend2/readme)
 

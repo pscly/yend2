@@ -1808,7 +1808,7 @@
             "get": {
                 "summary": "Debug Echo",
                 "description": "一个通用的回显接口，用于调试请求。\n返回请求的详细信息，包括方法、URL、头部、客户端IP和接收到的数据。",
-                "operationId": "debug_echo_api_v1_debug_echo_get",
+                "operationId": "debug_echo_api_v1_debug_echo_put",
                 "responses": {
                     "200": {
                         "description": "Successful Response",
@@ -1823,7 +1823,7 @@
             "put": {
                 "summary": "Debug Echo",
                 "description": "一个通用的回显接口，用于调试请求。\n返回请求的详细信息，包括方法、URL、头部、客户端IP和接收到的数据。",
-                "operationId": "debug_echo_api_v1_debug_echo_get",
+                "operationId": "debug_echo_api_v1_debug_echo_put",
                 "responses": {
                     "200": {
                         "description": "Successful Response",
@@ -1838,7 +1838,7 @@
             "post": {
                 "summary": "Debug Echo",
                 "description": "一个通用的回显接口，用于调试请求。\n返回请求的详细信息，包括方法、URL、头部、客户端IP和接收到的数据。",
-                "operationId": "debug_echo_api_v1_debug_echo_get",
+                "operationId": "debug_echo_api_v1_debug_echo_put",
                 "responses": {
                     "200": {
                         "description": "Successful Response",
@@ -1853,7 +1853,7 @@
             "delete": {
                 "summary": "Debug Echo",
                 "description": "一个通用的回显接口，用于调试请求。\n返回请求的详细信息，包括方法、URL、头部、客户端IP和接收到的数据。",
-                "operationId": "debug_echo_api_v1_debug_echo_get",
+                "operationId": "debug_echo_api_v1_debug_echo_put",
                 "responses": {
                     "200": {
                         "description": "Successful Response",
@@ -1868,7 +1868,7 @@
             "patch": {
                 "summary": "Debug Echo",
                 "description": "一个通用的回显接口，用于调试请求。\n返回请求的详细信息，包括方法、URL、头部、客户端IP和接收到的数据。",
-                "operationId": "debug_echo_api_v1_debug_echo_get",
+                "operationId": "debug_echo_api_v1_debug_echo_put",
                 "responses": {
                     "200": {
                         "description": "Successful Response",
@@ -1889,6 +1889,44 @@
                 "summary": "Read Root",
                 "description": "应用根路径，提供基本信息和文档链接。",
                 "operationId": "read_root__get",
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/d1": {
+            "get": {
+                "tags": [
+                    "Anonymous Push"
+                ],
+                "summary": "Anonymous Push",
+                "description": "匿名推送消息接口，支持GET和POST请求。\n\n- GET请求：通过URL参数接收 bt(标题) 和 content(内容)\n- POST请求：支持表单数据和JSON格式，接收 bt(标题) 和 content(内容)\n\n响应始终包含：\n- 当前时间（格式化为易读的日期时间字符串）\n- 当前请求的完整URL\n- 请求中的所有参数（作为字典）\n\n示例：\n- GET: /d1?bt=标题&content=内容\n- POST (表单): /d1 (表单数据: bt=标题&content=内容)\n- POST (JSON): /d1 (JSON数据: {\"bt\": \"标题\", \"content\": \"内容\"})",
+                "operationId": "anonymous_push_d1_post",
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    }
+                }
+            },
+            "post": {
+                "tags": [
+                    "Anonymous Push"
+                ],
+                "summary": "Anonymous Push",
+                "description": "匿名推送消息接口，支持GET和POST请求。\n\n- GET请求：通过URL参数接收 bt(标题) 和 content(内容)\n- POST请求：支持表单数据和JSON格式，接收 bt(标题) 和 content(内容)\n\n响应始终包含：\n- 当前时间（格式化为易读的日期时间字符串）\n- 当前请求的完整URL\n- 请求中的所有参数（作为字典）\n\n示例：\n- GET: /d1?bt=标题&content=内容\n- POST (表单): /d1 (表单数据: bt=标题&content=内容)\n- POST (JSON): /d1 (JSON数据: {\"bt\": \"标题\", \"content\": \"内容\"})",
+                "operationId": "anonymous_push_d1_post",
                 "responses": {
                     "200": {
                         "description": "Successful Response",
