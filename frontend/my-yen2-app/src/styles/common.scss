@@ -1,0 +1,25 @@
+/* 通用样式 */
+.page-container {
+  padding: 20rpx;
+}
+
+/* H5特定样式 */
+/* #ifdef H5 */
+.h5-only {
+  max-width: 750px;
+  margin: 0 auto;
+}
+/* #endif */
+
+/* 小程序特定样式 */
+/* #ifdef MP */
+.mp-only {
+  padding-bottom: 30rpx;
+}
+/* #endif */
+
+/* 安全区域适配 */
+.safe-area-bottom {
+  padding-bottom: constant(safe-area-inset-bottom);
+  padding-bottom: env(safe-area-inset-bottom);
+}
