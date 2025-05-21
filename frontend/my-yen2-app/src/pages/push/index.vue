@@ -348,5 +348,75 @@ onShow(() => {
   content: '';
   position: absolute;
   top: 30rpx;
+  left: 10rpx;
+  width: 10rpx;
+  height: 10rpx;
+  border-radius: 50%;
+  background-color: #f56c6c;
+}
+
+.message-item:last-child {
+  border-bottom: none;
+}
+
+.message-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10rpx;
+}
+
+.message-title {
+  font-size: 30rpx;
+  font-weight: bold;
+  color: #333;
+}
+
+.message-time {
+  font-size: 24rpx;
+  color: #999;
+}
+
+.message-content {
+  margin-bottom: 20rpx;
+}
+
+.message-text {
+  font-size: 28rpx;
+  color: #666;
+  line-height: 1.5;
+}
+
+.message-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.message-source {
+  font-size: 24rpx;
+  color: #999;
+}
+
+.message-actions {
+  display: flex;
+}
+
+.action-btn {
+  font-size: 24rpx;
+  color: #007aff;
+  margin-left: 20rpx;
+}
+
+.page-container {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+</style>
+
+
+
+
 
 

@@ -26,6 +26,7 @@ export function setupRouterGuard() {
     }
   });
   
+  // 虽然我们删除了 tabBar，但保留这个拦截器以防万一
   uni.addInterceptor('switchTab', {
     invoke(params) {
       return checkAuth(params.url);

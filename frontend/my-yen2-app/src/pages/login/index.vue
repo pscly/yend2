@@ -1,44 +1,48 @@
 <template>
   <view class="login-container">
-    <view class="login-header">
-      <image class="logo" src="/static/logo.png" />
-      <text class="title">用户登录</text>
-    </view>
+    <header-bar title="用户登录"></header-bar>
     
-    <view class="login-form">
-      <view class="form-item">
-        <text class="label">用户名</text>
-        <input 
-          class="input" 
-          type="text" 
-          v-model="form.username" 
-          placeholder="请输入用户名" 
-        />
+    <view class="login-form-container">
+      <view class="login-header">
+        <image class="logo" src="/static/logo.png" />
+        <text class="title">用户登录</text>
       </view>
       
-      <view class="form-item">
-        <text class="label">密码</text>
-        <input 
-          class="input" 
-          type="password" 
-          v-model="form.password" 
-          placeholder="请输入密码" 
-          password 
-        />
-      </view>
-      
-      <button 
-        class="login-button" 
-        type="primary" 
-        :loading="loading" 
-        @click="handleLogin"
-      >
-        登录
-      </button>
-      
-      <view class="form-actions">
-        <text class="action-link" @click="navigateTo('/pages/register/index')">注册账号</text>
-        <text class="action-link" @click="navigateTo('/pages/forgot-password/index')">忘记密码</text>
+      <view class="login-form">
+        <view class="form-item">
+          <text class="label">用户名</text>
+          <input 
+            class="input" 
+            type="text" 
+            v-model="form.username" 
+            placeholder="请输入用户名" 
+          />
+        </view>
+        
+        <view class="form-item">
+          <text class="label">密码</text>
+          <input 
+            class="input" 
+            type="password" 
+            v-model="form.password" 
+            placeholder="请输入密码" 
+            password 
+          />
+        </view>
+        
+        <button 
+          class="login-button" 
+          type="primary" 
+          :loading="loading" 
+          @click="handleLogin"
+        >
+          登录
+        </button>
+        
+        <view class="form-actions">
+          <text class="action-link" @click="navigateTo('/pages/register/index')">注册账号</text>
+          <text class="action-link" @click="navigateTo('/pages/forgot-password/index')">忘记密码</text>
+        </view>
       </view>
     </view>
   </view>
@@ -48,6 +52,7 @@
 import { ref, reactive } from 'vue';
 import { useUserStore } from '@/store/modules/user';
 import { showError, showSuccess, showLoading, hideLoading } from '@/utils/message';
+import HeaderBar from '@/components/common/HeaderBar.vue';
 
 const userStore = useUserStore();
 const loading = ref(false);
@@ -76,7 +81,7 @@ const handleLogin = async () => {
     
     // 登录成功后跳转到首页
     setTimeout(() => {
-      uni.switchTab({
+      uni.reLaunch({
         url: '/pages/index/index'
       });
     }, 1500);
@@ -108,7 +113,6 @@ const navigateTo = (url: string) => {
 
 <style lang="scss">
 .login-container {
-  padding: 40rpx;
   display: flex;
   flex-direction: column;
   min-height: 100vh;
@@ -182,5 +186,10 @@ const navigateTo = (url: string) => {
 .action-link {
   font-size: 26rpx;
   color: #007aff;
+}
+
+.login-form-container {
+  padding: 40rpx;
+  flex: 1;
 }
 </style>

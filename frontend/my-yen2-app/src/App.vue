@@ -58,4 +58,15 @@ page {
 .container {
   min-height: 100vh;
 }
+
+/* 重置按钮样式 */
+button {
+  margin: 0;
+  padding: 0;
+  background-color: transparent;
+}
+
+button::after {
+  border: none;
+}
 </style>

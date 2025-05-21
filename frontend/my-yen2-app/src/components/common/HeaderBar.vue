@@ -17,7 +17,13 @@
       </view>
     </view>
     
-    <view class="header-right" v-if="userStore.isLoggedIn">
+    <!-- 未登录时显示登录按钮 -->
+    <view class="header-right" v-if="!userStore.isLoggedIn">
+      <button class="login-btn" @click="goToLogin">登录</button>
+    </view>
+    
+    <!-- 已登录时显示用户信息 -->
+    <view class="header-right" v-else>
       <view class="user-info" @click="toggleDropdown">
         <text class="username">{{ userStore.userInfo?.username || '用户' }}</text>
         <view class="avatar-wrapper">
@@ -43,6 +49,7 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue';
+import { onShow } from '@dcloudio/uni-app';
 import { useUserStore } from '@/store/modules/user';
 import { showSuccess, showConfirm } from '@/utils/message';
 
@@ -67,6 +74,7 @@ const navItems = computed(() => {
     return [
       ...baseItems,
       { text: '消息中心', path: '/pages/push/index' },
+      { text: '个人中心', path: '/pages/user/index' }
       // 可以添加更多需要登录的页面
     ];
   }
@@ -76,12 +84,29 @@ const navItems = computed(() => {
 
 // 获取当前页面路径
 onMounted(() => {
+  updateCurrentPath();
+});
+
+// 使用 uni-app 的 onShow 生命周期
+onShow(() => {
+  updateCurrentPath();
+});
+
+function updateCurrentPath() {
   const pages = getCurrentPages();
   if (pages.length > 0) {
     const currentPage = pages[pages.length - 1];
     currentPath.value = `/${currentPage.route}`;
+    console.log('当前路径:', currentPath.value);
   }
-});
+}
+
+// 跳转到登录页面
+const goToLogin = () => {
+  uni.navigateTo({
+    url: '/pages/login/index'
+  });
+};
 
 // 切换下拉菜单显示状态
 const toggleDropdown = () => {
@@ -92,13 +117,13 @@ const toggleDropdown = () => {
 const navigateTo = (url: string) => {
   showDropdown.value = false;
   
-  // 判断是否是 tabBar 页面
-  const tabBarPages = ['/pages/index/index', '/pages/user/index'];
-  if (tabBarPages.includes(url)) {
-    uni.switchTab({ url });
-  } else {
-    uni.navigateTo({ url });
+  // 如果是当前页面，不进行跳转
+  if (currentPath.value === url) {
+    return;
   }
+  
+  // 由于删除了 tabBar，所有页面都使用 navigateTo
+  uni.navigateTo({ url });
 };
 
 // 处理登出操作
@@ -135,6 +160,8 @@ uni.onTouchStart(() => {
   background-color: #fff;
   box-shadow: 0 2rpx 10rpx rgba(0, 0, 0, 0.1);
   z-index: 100;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .header-left {
@@ -152,6 +179,8 @@ uni.onTouchStart(() => {
   display: flex;
   align-items: center;
   height: 100%;
+  flex: 1;
+  justify-content: center;
 }
 
 .nav-item {
@@ -183,6 +212,21 @@ uni.onTouchStart(() => {
 
 .header-right {
   position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.login-btn {
+  width: 120rpx;
+  height: 60rpx;
+  line-height: 60rpx;
+  background-color: #409EFF;
+  color: #fff;
+  font-size: 26rpx;
+  border-radius: 30rpx;
+  padding: 0;
+  margin: 0;
+  text-align: center;
 }
 
 .user-info {
@@ -212,17 +256,17 @@ uni.onTouchStart(() => {
 
 .dropdown-menu {
   position: absolute;
-  top: 100rpx;
+  top: 90rpx;
   right: 0;
-  width: 240rpx;
+  width: 200rpx;
   background-color: #fff;
   border-radius: 8rpx;
-  box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.15);
+  box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.1);
   z-index: 101;
 }
 
 .dropdown-item {
-  padding: 24rpx 30rpx;
+  padding: 20rpx;
   border-bottom: 1px solid #f0f0f0;
 }
 
@@ -231,7 +275,7 @@ uni.onTouchStart(() => {
 }
 
 .dropdown-text {
-  font-size: 28rpx;
+  font-size: 26rpx;
   color: #333;
 }
 
@@ -239,3 +283,6 @@ uni.onTouchStart(() => {
   color: #f56c6c;
 }
 </style>
+
+
+
