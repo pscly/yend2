@@ -53,7 +53,8 @@ def decode_access_token(token: str) -> Optional[dict]:
     """
     try:
         # leeway 参数可以容忍几秒钟的时钟偏差
-        payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[ALGORITHM], leeway=10)
+        payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[ALGORITHM])
+        # payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[ALGORITHM], leeway=10)
         return payload
     except JWTError: # 包括 ExpiredSignatureError, InvalidTokenError 等
         return None

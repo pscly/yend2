@@ -234,7 +234,7 @@ async def update_navigation_item(
     updated_item = await crud_navigation_item.update_item(
         db=db, db_obj=db_item, obj_in=item_in
     )
-    return updated_item
+    return updated_item 
 
 
 @router.delete(

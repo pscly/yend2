@@ -12,15 +12,16 @@ from app.schemas.navigation import (
     NavigationItemCreate,
     NavigationItemUpdate,
 )
-from app.models.user import User as UserModel # 用于关联用户
+# from app.models.user import User as UserModel # 如果需要直接操作 User，但通常通过 user_id
 
+# --- CRUDNavigationGroup Class ---
 class CRUDNavigationGroup:
     """
     导航分组模型的数据库操作 (CRUD) 类。
     """
 
     async def get_group_by_id(
-        self, db: AsyncSession, *, group_id: int, user_id: int # 确保分组属于该用户
+        self, db: AsyncSession, *, group_id: int, user_id: int
     ) -> Optional[NavigationGroupModel]:
         """通过分组ID和用户ID获取导航分组。"""
         stmt = select(NavigationGroupModel).where(
@@ -37,7 +38,7 @@ class CRUDNavigationGroup:
         stmt = (
             select(NavigationGroupModel)
             .where(NavigationGroupModel.user_id == user_id)
-            .order_by(NavigationGroupModel.order_index, NavigationGroupModel.created_at) # 按排序索引和创建时间排序
+            .order_by(NavigationGroupModel.order_index, NavigationGroupModel.created_at)
             .offset(skip)
             .limit(limit)
         )
@@ -48,11 +49,9 @@ class CRUDNavigationGroup:
         self, db: AsyncSession, *, obj_in: NavigationGroupCreate, user_id: int
     ) -> NavigationGroupModel:
         """为指定用户创建新的导航分组。"""
-        db_obj = NavigationGroupModel(
-            **obj_in.model_dump(), # Pydantic V2
-            # **obj_in.dict(), # Pydantic V1
-            user_id=user_id
-        )
+        db_obj_data = obj_in.model_dump()
+        db_obj_data["user_id"] = user_id # 确保 user_id 被设置
+        db_obj = NavigationGroupModel(**db_obj_data)
         db.add(db_obj)
         await db.commit()
         await db.refresh(db_obj)
@@ -62,15 +61,14 @@ class CRUDNavigationGroup:
         self,
         db: AsyncSession,
         *,
-        db_obj: NavigationGroupModel, # 要更新的 SQLAlchemy 模型实例
+        db_obj: NavigationGroupModel,
         obj_in: Union[NavigationGroupUpdate, Dict[str, Any]]
     ) -> NavigationGroupModel:
         """更新导航分组信息。"""
         if isinstance(obj_in, dict):
             update_data = obj_in
         else:
-            update_data = obj_in.model_dump(exclude_unset=True, exclude_none=True) # Pydantic V2
-            # update_data = obj_in.dict(exclude_unset=True, exclude_none=True) # Pydantic V1
+            update_data = obj_in.model_dump(exclude_unset=True, exclude_none=True)
 
         for field, value in update_data.items():
             if hasattr(db_obj, field):
@@ -85,43 +83,41 @@ class CRUDNavigationGroup:
         self, db: AsyncSession, *, group_id: int, user_id: int
     ) -> Optional[NavigationGroupModel]:
         """删除属于特定用户的导航分组。"""
-        # 首先获取对象，确保它属于该用户，然后删除
-        # cascade="all, delete-orphan" 在模型定义中会处理其下的 items
         group_to_delete = await self.get_group_by_id(db, group_id=group_id, user_id=user_id)
         if group_to_delete:
             await db.delete(group_to_delete)
             await db.commit()
         return group_to_delete
 
-
+# --- CRUDNavigationItem Class ---
 class CRUDNavigationItem:
     """
     导航项模型的数据库操作 (CRUD) 类。
     """
 
     async def get_item_by_id(
-        self, db: AsyncSession, *, item_id: int, user_id: int # 确保操作的是该用户的导航项
+        self, db: AsyncSession, *, item_id: int, user_id: int
     ) -> Optional[NavigationItemModel]:
         """通过导航项ID获取导航项，并验证其所有权。"""
         stmt = (
             select(NavigationItemModel)
-            .join(NavigationGroupModel, NavigationItemModel.group_id == NavigationGroupModel.id) # 通过group确保用户所有权
+            .join(NavigationGroupModel, NavigationItemModel.group_id == NavigationGroupModel.id)
             .where(
                 NavigationItemModel.id == item_id,
-                NavigationGroupModel.user_id == user_id
+                NavigationGroupModel.user_id == user_id # 通过关联的 group 验证 user_id
             )
         )
         result = await db.execute(stmt)
         return result.scalar_one_or_none()
 
     async def get_items_by_group_id(
-        self, db: AsyncSession, *, group_id: int, user_id: int, skip: int = 0, limit: int = 200 # 导航项通常不会非常多
+        self, db: AsyncSession, *, group_id: int, user_id: int, skip: int = 0, limit: int = 200
     ) -> List[NavigationItemModel]:
         """获取指定导航分组下的所有导航项，并验证分组所有权。"""
-        # 首先确认分组存在且属于用户
-        group = await crud_navigation_group.get_group_by_id(db, group_id=group_id, user_id=user_id)
-        if not group:
-            return [] # 或者抛出异常
+        # 先验证分组是否属于该用户
+        group_owner_check = await crud_navigation_group.get_group_by_id(db, group_id=group_id, user_id=user_id)
+        if not group_owner_check:
+            return [] # 或者抛出 HTTPException(status_code=404, detail="Group not found or not owned by user")
 
         stmt = (
             select(NavigationItemModel)
@@ -137,16 +133,14 @@ class CRUDNavigationItem:
         self, db: AsyncSession, *, obj_in: NavigationItemCreate, group_id: int, user_id: int
     ) -> Optional[NavigationItemModel]:
         """在指定导航分组下创建新的导航项，并验证分组所有权。"""
-        # 确认分组存在且属于用户
-        group = await crud_navigation_group.get_group_by_id(db, group_id=group_id, user_id=user_id)
-        if not group:
-            return None # 或者抛出异常，表示分组不存在或不属于该用户
+        group_owner_check = await crud_navigation_group.get_group_by_id(db, group_id=group_id, user_id=user_id)
+        if not group_owner_check:
+            return None # 或者抛出 HTTPException
 
-        db_obj = NavigationItemModel(
-            **obj_in.model_dump(), # Pydantic V2
-            # **obj_in.dict(), # Pydantic V1
-            group_id=group_id
-        )
+        db_obj_data = obj_in.model_dump()
+        db_obj_data['url'] = str(db_obj_data['url'])
+        db_obj_data["group_id"] = group_id # 确保 group_id 被设置
+        db_obj = NavigationItemModel(**db_obj_data)
         db.add(db_obj)
         await db.commit()
         await db.refresh(db_obj)
@@ -156,16 +150,14 @@ class CRUDNavigationItem:
         self,
         db: AsyncSession,
         *,
-        db_obj: NavigationItemModel, # 要更新的 SQLAlchemy 模型实例
+        db_obj: NavigationItemModel,
         obj_in: Union[NavigationItemUpdate, Dict[str, Any]]
     ) -> NavigationItemModel:
         """更新导航项信息。"""
-        # (在调用此方法前，应已通过 get_item_by_id 验证了所有权)
         if isinstance(obj_in, dict):
             update_data = obj_in
         else:
-            update_data = obj_in.model_dump(exclude_unset=True, exclude_none=True) # Pydantic V2
-            # update_data = obj_in.dict(exclude_unset=True, exclude_none=True) # Pydantic V1
+            update_data = obj_in.model_dump(exclude_unset=True, exclude_none=True)
 
         for field, value in update_data.items():
             if hasattr(db_obj, field):
@@ -189,33 +181,26 @@ class CRUDNavigationItem:
     async def reorder_items_in_group(
         self, db: AsyncSession, *, group_id: int, user_id: int, ordered_item_ids: List[int]
     ) -> bool:
-        """
-        重新排序指定分组内的导航项。
-        ordered_item_ids: 包含导航项ID的列表，按新的顺序排列。
-        """
-        group = await crud_navigation_group.get_group_by_id(db, group_id=group_id, user_id=user_id)
-        if not group:
-            return False # 分组不存在或不属于用户
+        """重新排序指定分组内的导航项。"""
+        group_owner_check = await crud_navigation_group.get_group_by_id(db, group_id=group_id, user_id=user_id)
+        if not group_owner_check:
+            return False
 
-        # 获取该分组下所有当前存在的导航项，用于验证 ID 是否有效
         current_items_stmt = select(NavigationItemModel.id).where(NavigationItemModel.group_id == group_id)
         result = await db.execute(current_items_stmt)
         valid_item_ids_in_group = {item_id_tuple[0] for item_id_tuple in result.fetchall()}
 
-        if not set(ordered_item_ids).issubset(valid_item_ids_in_group):
-            # 如果传入的 ID 列表包含不属于该分组的项，则操作失败
-            # 或者，如果传入的ID数量与分组内实际项数量不匹配 (除非允许部分排序)
-            # 这里简化为：所有传入的 ID 必须有效且属于该分组
-            return False # 或者抛出错误
+        if not set(ordered_item_ids).issubset(valid_item_ids_in_group) or \
+           len(ordered_item_ids) != len(valid_item_ids_in_group): # 确保所有项都被包含且没有多余项
+            return False
 
         for index, item_id in enumerate(ordered_item_ids):
             stmt = (
                 sqlalchemy_update(NavigationItemModel)
-                .where(NavigationItemModel.id == item_id, NavigationItemModel.group_id == group_id) # 双重保险
+                .where(NavigationItemModel.id == item_id, NavigationItemModel.group_id == group_id)
                 .values(order_index=index)
             )
             await db.execute(stmt)
-
         await db.commit()
         return True
 
