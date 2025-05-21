@@ -53,7 +53,7 @@ class PushSource(Base):
     # 从此来源发出的所有消息 (如果需要双向关联)
     messages_originated = relationship(
         "PushMessage",
-        back_populates="source_of_message", # 区分于 PushMessage 中的 user 关系
+        back_populates="source", # 对应于 PushMessage 中的 source 关系
         cascade="all, delete-orphan", # 如果删除来源，相关的消息也删除 (谨慎)
         lazy="selectin"
     )
@@ -82,9 +82,7 @@ class PushSubscription(Base):
     # 用户针对此订阅的特定配置 (可选)
     # 例如，如果来源是“通用邮件推送”，这里可以存用户的目标邮箱地址
     # 如果来源是某个需要用户提供特定参数的Webhook，也可以存在这里
-    # user_specific_config = Column(JSONB if Base.metadata.bind and 'postgresql' in Base.metadata.bind.dialect.name else JSON,
-    #                               nullable=True, comment="用户针对此订阅的特定配置 (JSON格式)")
-    config = Column(JSON, nullable=True, comment="来源的特定配置 (JSON格式)")
+    user_specific_config = Column(JSON, nullable=True, comment="用户针对此订阅的特定配置 (JSON格式)")
 
     is_active = Column(Boolean, default=True, nullable=False, comment="用户是否希望接收此订阅的推送")
 
@@ -131,9 +129,7 @@ class PushMessage(Base):
     content = Column(Text, nullable=False, comment="消息主体内容 (可以是纯文本、Markdown、HTML片段等)")
     content_type = Column(String(50), default="text/plain", nullable=False, comment="内容类型 (如 'text/plain', 'text/markdown', 'application/json')")
     # 原始推送数据，用于调试、未来扩展或重新处理
-    # raw_data = Column(JSONB if Base.metadata.bind and 'postgresql' in Base.metadata.bind.dialect.name else JSON,
-    #                   nullable=True, comment="从来源接收到的原始数据 (JSON格式)")
-    config = Column(JSON, nullable=True, comment="来源的特定配置 (JSON格式)")
+    raw_data = Column(JSON, nullable=True, comment="从来源接收到的原始数据 (JSON格式)")
 
 
     # --- 消息状态与时间 ---
@@ -153,7 +149,7 @@ class PushMessage(Base):
     # 关联到接收消息的用户
     user = relationship("User", back_populates="push_messages_received")
     # 关联到消息的原始来源
-    source_of_message = relationship("PushSource", back_populates="messages_originated") # 重命名以避免与 PushSource.subscriptions 中的 source 冲突
+    source = relationship("PushSource", back_populates="messages_originated", foreign_keys=[source_id])
 
     def __repr__(self) -> str:
         return f"<PushMessage(id={self.id}, user_id={self.user_id}, source_id={self.source_id}, status='{self.status}')>"

@@ -134,6 +134,10 @@ class TokenData(BaseModel): # <--- 这是关键的 TokenData 定义
     """
     sub: Optional[str] = Field(None, description="Token 的主题 (通常是用户名)")
     user_id: Optional[int] = Field(None, description="用户ID (可选，如果包含在token中)") # 或者 Optional[uuid.UUID]
+    exp: Optional[int] = Field(None, description="Token 的过期时间 (Unix 时间戳)")
+    iat: Optional[int] = Field(None, description="Token 的发布时间 (Unix 时间戳)")
+    jti: Optional[str] = Field(None, description="JWT ID (唯一标识符)")
+    iss: Optional[str] = Field(None, description="Token 的发行者")
 
 
 # --- 用于请求新密码或重置密码的 Schema (可选) ---

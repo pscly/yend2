@@ -144,8 +144,15 @@ class CRUDPushSubscription:
             # 这里我们假设如果已存在则不重复创建 (或由API端点处理此逻辑)
             raise ValueError("User is already subscribed to this source.") # 或者返回现有订阅
 
+        # 获取模型数据并添加用户ID
         db_obj_data = obj_in.model_dump()
         db_obj_data["user_id"] = user_id
+
+        # 确保字段名称与模型一致
+        if "user_specific_config" in db_obj_data and "config" not in db_obj_data:
+            db_obj_data["user_specific_config"] = db_obj_data.pop("config", None)
+
+        # 创建模型实例
         db_obj = PushSubscriptionModel(**db_obj_data)
         db.add(db_obj)
         await db.commit()
@@ -157,13 +164,19 @@ class CRUDPushSubscription:
     ) -> PushSubscriptionModel:
         """更新用户订阅 (通常是 is_active 或 user_specific_config)"""
         if isinstance(obj_in, dict):
-            update_data = obj_in
+            update_data = obj_in.copy()
         else:
             update_data = obj_in.model_dump(exclude_unset=True, exclude_none=True)
 
+        # 确保字段名称与模型一致
+        if "config" in update_data and hasattr(db_obj, "user_specific_config"):
+            update_data["user_specific_config"] = update_data.pop("config")
+
+        # 更新模型字段
         for field, value in update_data.items():
             if hasattr(db_obj, field):
                 setattr(db_obj, field, value)
+
         db.add(db_obj)
         await db.commit()
         await db.refresh(db_obj)
@@ -227,6 +240,7 @@ class CRUDPushMessage:
         status: str = "unread" # 初始状态
     ) -> PushMessageModel:
         """为特定用户创建一条推送消息记录"""
+        # 创建消息模型实例
         db_obj = PushMessageModel(
             user_id=user_id,
             source_id=source_id,
@@ -267,6 +281,7 @@ class CRUDPushMessage:
         for user in subscribers:
             # 这里可以添加更复杂的逻辑，例如检查用户是否已接收过类似消息 (去重)
             # 或者根据用户的 user_specific_config 定制消息内容 (如果适用)
+            # 为每个订阅用户创建消息
             db_message = PushMessageModel(
                 user_id=user.id,
                 source_id=source_id,
