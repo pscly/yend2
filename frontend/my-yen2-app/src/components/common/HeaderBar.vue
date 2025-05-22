@@ -1,5 +1,5 @@
 <template>
-  <view class="header-bar">
+  <view class="header-bar" @touchstart.stop="handleTouchStart">
     <view class="header-left">
       <text class="page-title">{{ title }}</text>
     </view>
@@ -32,7 +32,7 @@
       </view>
       
       <!-- 下拉菜单 -->
-      <view class="dropdown-menu" v-if="showDropdown">
+      <view class="dropdown-menu" v-if="showDropdown" @touchstart.stop>
         <view class="dropdown-item" @click="navigateTo('/pages/user/index')">
           <text class="dropdown-text">个人主页</text>
         </view>
@@ -75,7 +75,6 @@ const navItems = computed(() => {
       ...baseItems,
       { text: '消息中心', path: '/pages/push/index' },
       { text: '个人中心', path: '/pages/user/index' }
-      // 可以添加更多需要登录的页面
     ];
   }
   
@@ -97,7 +96,6 @@ function updateCurrentPath() {
   if (pages.length > 0) {
     const currentPage = pages[pages.length - 1];
     currentPath.value = `/${currentPage.route}`;
-    console.log('当前路径:', currentPath.value);
   }
 }
 
@@ -141,25 +139,29 @@ const handleLogout = async () => {
   showDropdown.value = false;
 };
 
-// 点击页面其他区域关闭下拉菜单
-uni.onTouchStart(() => {
+// 处理触摸事件
+const handleTouchStart = () => {
   if (showDropdown.value) {
     showDropdown.value = false;
   }
-});
+};
 </script>
 
 <style lang="scss">
 .header-bar {
-  position: relative;
+  position: fixed;
+  top: 0;
+  left: 0;
   display: flex;
   justify-content: space-between;
   align-items: center;
   height: 100rpx;
   padding: 0 30rpx;
-  background-color: #fff;
+  padding-top: constant(safe-area-inset-top);
+  padding-top: env(safe-area-inset-top);
+  background-color: #409EFF;
   box-shadow: 0 2rpx 10rpx rgba(0, 0, 0, 0.1);
-  z-index: 100;
+  z-index: 1000;
   width: 100%;
   box-sizing: border-box;
 }
@@ -172,7 +174,7 @@ uni.onTouchStart(() => {
 .page-title {
   font-size: 36rpx;
   font-weight: bold;
-  color: #333;
+  color: #ffffff;
 }
 
 .nav-menu {
@@ -193,7 +195,7 @@ uni.onTouchStart(() => {
 }
 
 .nav-item.active {
-  color: #409EFF;
+  color: #ffffff;
 }
 
 .nav-item.active::after {
@@ -203,11 +205,12 @@ uni.onTouchStart(() => {
   left: 20rpx;
   right: 20rpx;
   height: 4rpx;
-  background-color: #409EFF;
+  background-color: #ffffff;
 }
 
 .nav-text {
   font-size: 28rpx;
+  color: #f0f0f0;
 }
 
 .header-right {
@@ -220,8 +223,8 @@ uni.onTouchStart(() => {
   width: 120rpx;
   height: 60rpx;
   line-height: 60rpx;
-  background-color: #409EFF;
-  color: #fff;
+  background-color: #ffffff;
+  color: #409EFF;
   font-size: 26rpx;
   border-radius: 30rpx;
   padding: 0;
@@ -238,7 +241,7 @@ uni.onTouchStart(() => {
 .username {
   margin-right: 20rpx;
   font-size: 28rpx;
-  color: #333;
+  color: #ffffff;
 }
 
 .avatar-wrapper {
@@ -283,6 +286,9 @@ uni.onTouchStart(() => {
   color: #f56c6c;
 }
 </style>
+
+
+
 
 
 

@@ -1,5 +1,7 @@
 <template>
   <view class="container">
+    <!-- 全局引入HeaderBar -->
+    <header-bar title="Yen2应用"></header-bar>
     <!-- 应用内容将由路由自动加载 -->
   </view>
 </template>
@@ -10,6 +12,7 @@ import { setupAPI } from '@/utils/api-config';
 import { useUserStore } from '@/store/modules/user';
 import { showError } from '@/utils/message';
 import { setupRouterGuard } from '@/utils/router-guard';
+import HeaderBar from '@/components/common/HeaderBar.vue';
 
 // 初始化API配置
 setupAPI();

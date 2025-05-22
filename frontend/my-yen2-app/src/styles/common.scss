@@ -1,6 +1,8 @@
 /* 通用样式 */
 .page-container {
   padding: 20rpx;
+  padding-top: calc(120rpx + constant(safe-area-inset-top)); /* iOS 11.0 */
+  padding-top: calc(120rpx + env(safe-area-inset-top)); /* iOS 11.2+ */
 }
 
 /* H5特定样式 */
